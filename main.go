@@ -112,14 +112,15 @@ func StartRandomFeatureHashGenerator(id int) {
 	var (
 		feature *Feature
 		err     error
+		sources []*rand.Rand
+		count   = 0
 	)
 
 	fmt.Printf("generator #%d starts\n", id)
 
-	count := 0
-	sources := make([]*rand.Rand, 0, numOfRandSource)
 	for {
 		if count == 0 {
+			sources = make([]*rand.Rand, 0, numOfRandSource)
 			for idx := 0; idx < numOfRandSource; idx++ {
 				sources = append(sources, rand.New(rand.NewSource(<-seedChan)))
 			}
