@@ -13,9 +13,16 @@ import (
 )
 
 const (
-	defaultExperimentTimes = 200000
+	numOfWorkers           = 32
+	defaultExperimentTimes = 500000
 	minBatchSize           = 10000
 	gcBatchSize            = 100000
+	bufferChanSize         = 100000
+)
+
+var (
+	hashChan  = make(chan string, bufferChanSize)
+	errorChan chan error
 )
 
 func Float2Bytes(feature []float32) (data []byte, err error) {
@@ -58,6 +65,24 @@ func GetRandomFeatureHash() (hash string, err error) {
 	return
 }
 
+func StartRandomFeatureHashGenerator(idx int) {
+	var (
+		hash string
+		err  error
+	)
+
+	fmt.Printf("generator #%d starts\n", idx)
+	for {
+		if hash, err = GetRandomFeatureHash(); err == nil {
+			hashChan <- hash
+		} else {
+			errorChan <- err
+			break
+		}
+	}
+	fmt.Printf("generator #%d exits\n", idx)
+}
+
 func main() {
 	fmt.Println(`usage: md5con [times]`)
 
@@ -78,13 +103,24 @@ func main() {
 		batchSize = minBatchSize
 	}
 
+	for idx := 1; idx <= numOfWorkers; idx++ {
+		go StartRandomFeatureHashGenerator(idx)
+	}
+
 	hashMap := map[string]bool{}
 
+	var (
+		hash string
+		err  error
+	)
 	for idx := 1; idx <= times; idx++ {
-		hash, err := GetRandomFeatureHash()
-		if err != nil {
-			fmt.Printf("index #%d - got error: %v\n", idx, err)
-			continue
+		select {
+		case hash = <-hashChan:
+		case err = <-errorChan:
+			if err != nil {
+				fmt.Printf("index #%d - got error: %v\n", idx, err)
+				continue
+			}
 		}
 
 		if _, ok := hashMap[hash]; ok {
