@@ -11,6 +11,11 @@ import (
 	"github.com/1set/gut/yrand"
 )
 
+const (
+	defaultExperimentTimes = 10000
+	minBatchSize = 10000
+)
+
 func Float2Bytes(feature []float32) (data []byte, err error) {
 	var feaBuf bytes.Buffer
 	err = binary.Write(&feaBuf, binary.LittleEndian, feature)
@@ -52,7 +57,7 @@ func GetRandomFeatureHash() (hash string, err error) {
 func main() {
 	fmt.Println(`usage: md5con [times]`)
 
-	times := 10000
+	times := defaultExperimentTimes
 	if len(os.Args) >= 2 {
 		rawPort := os.Args[1]
 		if num, err := strconv.Atoi(rawPort); err != nil {
@@ -64,5 +69,31 @@ func main() {
 	}
 	fmt.Println("experiment times:", times)
 
-	fmt.Println(GetRandomFeatureHash())
+	batchSize := times / 1000
+	if batchSize < minBatchSize {
+		batchSize = minBatchSize
+	}
+
+	hashMap := map[string]bool{}
+
+	for idx := 1; idx <= times; idx++ {
+		hash, err := GetRandomFeatureHash()
+		if err != nil {
+			fmt.Printf("index #%d - got error: %v\n", idx, err)
+			continue
+		}
+
+		if _, ok := hashMap[hash]; ok {
+			fmt.Printf("index #%d - got conflict: %s\n", idx, hash)
+			os.Exit(2)
+		}
+
+		hashMap[hash] = true
+		if idx % minBatchSize == 0 {
+			fmt.Printf("done: %.2f%% (%d) - %s\n", float64(idx) / float64(times) * 100, idx, hash)
+		}
+	}
+
+	fmt.Println("all done for", times)
+	os.Exit(0)
 }
