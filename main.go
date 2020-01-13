@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"os"
+	"runtime/debug"
 	"strconv"
 
 	"github.com/1set/gut/yhash"
@@ -12,8 +13,9 @@ import (
 )
 
 const (
-	defaultExperimentTimes = 10000
+	defaultExperimentTimes = 200000
 	minBatchSize           = 10000
+	gcBatchSize            = 100000
 )
 
 func Float2Bytes(feature []float32) (data []byte, err error) {
@@ -41,7 +43,9 @@ func GetRandomFeatureBytes() (bytes []byte, err error) {
 
 func GetRandomFeatureHash() (hash string, err error) {
 	var bytes []byte
-	bytes, err = GetRandomFeatureBytes()
+	if bytes, err = GetRandomFeatureBytes(); err != nil {
+		return
+	}
 
 	if hash, err = yhash.BytesMD5(bytes); err == nil {
 		if len(hash) >= 18 {
@@ -89,7 +93,12 @@ func main() {
 		}
 
 		hashMap[hash] = true
-		if idx%minBatchSize == 0 {
+
+		if idx%gcBatchSize == 0 {
+			fmt.Printf("done: %.2f%% (%d) - %s √ GC\n", float64(idx)/float64(times)*100, idx, hash)
+			// runtime.GC()
+			debug.FreeOSMemory()
+		} else if idx%minBatchSize == 0 {
 			fmt.Printf("done: %.2f%% (%d) - %s\n", float64(idx)/float64(times)*100, idx, hash)
 		}
 	}
