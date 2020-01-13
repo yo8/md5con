@@ -7,6 +7,7 @@ import (
 	"os"
 	"runtime/debug"
 	"strconv"
+	"time"
 
 	"github.com/1set/gut/yhash"
 	"github.com/1set/gut/yrand"
@@ -113,6 +114,8 @@ func main() {
 		hash string
 		err  error
 	)
+
+	startTime := time.Now()
 	for idx := 1; idx <= times; idx++ {
 		select {
 		case hash = <-hashChan:
@@ -135,7 +138,8 @@ func main() {
 			// runtime.GC()
 			debug.FreeOSMemory()
 		} else if idx%minBatchSize == 0 {
-			fmt.Printf("done: %.2f%% (%d) - %s\n", float64(idx)/float64(times)*100, idx, hash)
+			fmt.Printf("done: %.2f%% (%d) - %s - %.2f/sec\n", float64(idx)/float64(times)*100, idx, hash, float64(minBatchSize)/(time.Since(startTime).Seconds()))
+			startTime = time.Now()
 		}
 	}
 
