@@ -13,7 +13,7 @@ import (
 
 const (
 	defaultExperimentTimes = 10000
-	minBatchSize = 10000
+	minBatchSize           = 10000
 )
 
 func Float2Bytes(feature []float32) (data []byte, err error) {
@@ -89,8 +89,8 @@ func main() {
 		}
 
 		hashMap[hash] = true
-		if idx % minBatchSize == 0 {
-			fmt.Printf("done: %.2f%% (%d) - %s\n", float64(idx) / float64(times) * 100, idx, hash)
+		if idx%minBatchSize == 0 {
+			fmt.Printf("done: %.2f%% (%d) - %s\n", float64(idx)/float64(times)*100, idx, hash)
 		}
 	}
 
