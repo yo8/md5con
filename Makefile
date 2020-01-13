@@ -14,7 +14,9 @@ doc:
 fmt:
 	$(GOFMT) -l -w .
 build:
-	$(GOCMD) build -v -o $(BINARY)
+	$(GOBUILD) -v -o $(BINARY)
+buildlinux:
+	GOOS=linux GOARCH=amd64 $(GOBUILD) -v -o $(BINARY)
 test:
 	$(GOTEST) -race -v
 bench:
