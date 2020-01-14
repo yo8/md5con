@@ -37,4 +37,17 @@ jobs:
       shell: bash
       run: |
         make build
-        ./md5con 2000000
+        ./md5con 5000000
+
+    - name: Mount Disk
+      shell: bash
+      run: |
+        df -h
+        free -h
+        ls -lash /mnt
+        mkdir -p /mnt/ramdisk
+        mount -t tmpfs -o size=512m tmpfs /mnt/ramdisk
+        df -h
+        ls -lash /mnt/ramdisk
+        cp md5con /mnt/ramdisk
+        ls -lash /mnt/ramdisk
